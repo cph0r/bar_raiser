@@ -21,7 +21,8 @@ function crud(action,book_id){
     // Setup - add a text input to each footer cell
     $('#table_id thead tr').clone(true).appendTo( '#table_id thead' );
     $('#table_id thead tr:eq(1) th').each( function (i) {
-        if(i!==2){
+        let disable_array = [3,4]
+        if(!disable_array.includes(i)){
         var title = $(this).text();
         $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
         $( 'input', this ).on( 'keyup change', function () {

@@ -1,0 +1,2 @@
+<button type='button'  style=" width:auto;padding:10px;margin-left:100px;margin-top:10px"><i class="fa fa-plus-circle"></i>    ADD</button>
+    onclick="crud('add','')" 

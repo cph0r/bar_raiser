@@ -1,22 +1,20 @@
 <!DOCTYPE>
     <html>
     <head>
- {% include "inventory/imports/js.html" %}
-{% include "inventory/imports/css.html" %}
+ {% include "video_app/imports/js.html" %}
+{% include "video_app/imports/css.html" %}
     <title>
         Fampay Video App
     </title>    
     <head>
-{%  include 'inventory/imports/style.html' %}
+{%  include 'video_app/imports/style.html' %}
     <body>
-    {% comment %} <div id='modal_div'></div> {% endcomment %}
-    <button type='button'  style=" width:auto;padding:10px;margin-left:100px;margin-top:10px"><i class="fa fa-plus-circle"></i>    ADD</button>
-    onclick="crud('add','')" 
+    <div id='modal_div'></div>
     <div style="padding:100px">
-    {% include "inventory/table/table.html" %}
+    {% include "video_app/table/table.html" %}
 <div>
 
-{% include "inventory/table/script.html" %}
+{% include "video_app/table/script.html" %}
 {% if messages %}
 <script>
 {% for message in messages %}
