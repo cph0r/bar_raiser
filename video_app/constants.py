@@ -22,7 +22,7 @@ ITEMS = 'items'
 TYPE = 'type'
 VIDEO = 'video'
 QUERY = 'cricket'
-PAGE_THRESHOLD  = '10'
+PAGE_THRESHOLD  = '20'
 PART_TYPE  = 'snippet'
 PUBLISHED_AFTER = 'publishedAfter'
 MAX_RESULTS  = 'maxResults'
@@ -39,6 +39,7 @@ POST = 'POST'
 GET  = 'GET'
 BLANK = ''
 API_KEYS = 'api_keys'
+FREQUENCY = 10
 
 # MESSAGES
 SUCCESS = 'Added Successfully'

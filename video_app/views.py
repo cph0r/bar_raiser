@@ -1,10 +1,13 @@
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 import requests
-# from grequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import videos_serializer
+# import grequests
+# import asyncio
+import time
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from . import models
 from requests.api import get
@@ -21,8 +24,11 @@ s = sched.scheduler(time.time, time.sleep)
 
 def dashboard(request):
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
-    # s.enter(60, 1, fill_db, (s,))
-    # s.run()
+    scheduler = BackgroundScheduler()
+    scheduler.configure(timezone='utc')
+    scheduler.add_job(fill_db, 'interval', seconds=10)
+    # scheduler.add
+    scheduler.start()
     return render(request, BASE_PATH, {ENTRIES: entries})
 
 
@@ -52,8 +58,7 @@ def search(request, q):
     serializer = videos_serializer(entries, many=True)
     return Response(serializer.data)
 
-
-def fill_db(sc):
+def fill_db():
     api_keys = getattr(models, API_KEYS).objects.all(
     ).values_list(API_KEY, flat=True)
     success = False
@@ -61,7 +66,7 @@ def fill_db(sc):
         if success == False:
             try:
                 results = fetch_results(api_key)
-                save_results(sc, results)
+                save_results(results)
                 success = True
             except Exception as ex:
                 print(ex)
@@ -71,7 +76,7 @@ def fill_db(sc):
             print(FETCHED_RESULT)
             break
 
-def save_results(sc, results):
+def save_results(results):
     existing_ids = getattr(models, VIDEOS).objects.all(
                 ).values_list(VIDEO_ID, flat=True)
     fetched_ids = create_new_entries(results, existing_ids)
@@ -79,7 +84,6 @@ def save_results(sc, results):
     
     LAST_MODIFIED = datetime.datetime.now()
     print(LAST_MODIFIED_ON + str(LAST_MODIFIED))
-    s.enter(60, 1, fill_db, (sc,))
 
 def delete_entries(existing_ids, fetched_ids):
     to_delete_ids = []
@@ -88,7 +92,7 @@ def delete_entries(existing_ids, fetched_ids):
             to_delete_ids.append(entry)
     
     if len(to_delete_ids) != 0:
-        getattr(models, VIDEOS).objects.filter(**{ID+'__in':to_delete_ids}).delete()
+        getattr(models, VIDEOS).objects.filter(**{VIDEO_ID+'__in':to_delete_ids}).delete()
 
 def create_new_entries(results, existing_ids):
     fetched_ids = []
@@ -144,3 +148,4 @@ def add(request):
     else:
         entries = getattr(models, API_KEYS).objects.all()
         return render(request, MODAL_PATH, {ENTRIES: entries})
+
