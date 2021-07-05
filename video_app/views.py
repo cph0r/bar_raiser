@@ -27,7 +27,6 @@ def dashboard(request):
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone='utc')
     scheduler.add_job(fill_db, 'interval', seconds=10)
-    # scheduler.add
     scheduler.start()
     return render(request, BASE_PATH, {ENTRIES: entries})
 
