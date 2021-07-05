@@ -5,9 +5,9 @@ BASIC REQUIREMENTS -
 1. Call youtube API every 10 sec with a hard coded query - [x]
 
 2. Create a API to return a paginated response of all stored videos - [x]
-    -> 'https://api_url/view'
+    -> 'https://fampayapp.herokuapp.com/view'
 3. Create a API able to search the videos in local db based on title and description - [x]
-    -> 'https://api_url/search/<INSERT QUERY HERE>/'
+    -> 'https://fampayapp.herokuapp.com/search/<INSERT QUERY HERE>/'
 
 4. Dockerise the application - [x]
     -> 'https://docker_url.com/
@@ -24,6 +24,7 @@ BONUS POINTS -
 ASSUMPTIONS - 
 1. Query parameter was assumed  to be -> 'cricket'
 2. Threshold date was hardcoded as query parameter to be  -> '2020-01-01T18:42:16Z'
+3. total results were restricted to 1000
 
 ISSUES - 
 1. Server Side rendering was not done dashboard, due to which it will take a lot of time to render if max_results exceeds 10,000
