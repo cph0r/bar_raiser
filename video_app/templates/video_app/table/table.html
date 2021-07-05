@@ -14,8 +14,8 @@
             <td>{{ entry.title }}</td>
             <td style="text-align:center" >{{ entry.description }}</td>
             <td style="text-align:center" >{{ entry.date }}</td>
-            <td style="text-align:center" >{{ entry.photo }}</td>
-            <td style="text-align:center" >{{ entry.url }}</td>
+            <td style="text-align:center" ><a href="{{ entry.photo }}" target='_blank'>View Thumbnail</a></td>
+            <td style="text-align:center" ><a href="{{ entry.url }}" targer='_blank'>Watch Video</a></td>
             
         </tr>
         {% endfor %}
