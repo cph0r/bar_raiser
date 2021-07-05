@@ -1,7 +1,7 @@
 
 BASE_PATH = 'video_app/base.html'
 TITLE = 'title'
-DESCRIPTION = 'descrription'
+DESCRIPTION = 'description'
 DATE = 'date'
 PHOTO = 'photo'
 VIDEOS = 'videos'

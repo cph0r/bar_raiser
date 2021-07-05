@@ -4,7 +4,7 @@ from django.http import HttpResponse
 import requests
 import json
 
-from requests import models
+from . import models
 from requests.api import get
 import datetime
 from .constants import *
@@ -12,7 +12,7 @@ import sched, time
 s = sched.scheduler(time.time, time.sleep)
 
 def index(request):
-    entries = getattr(models,VIDEOS).objects.all().order('-'+DATE)
+    entries = getattr(models,VIDEOS).objects.all().order_by('-'+DATE)
     s.enter(60, 1, fill_db, (s,))
     s.run()
     return render(request, BASE_PATH, {ENTRIES:entries})
@@ -29,10 +29,10 @@ def fill_db(sc):
 
     bulk_create_list = []
     for result in results:
-        fetched_id = result[ID][VIDEO_ID]
+        fetched_id = result[ID]['videoId']
         if fetched_id not in existing_ids:
             timestamp = result[SNIPPET][PUBLISHED_AT]
-            timestamp.replace('T',' ').replace('Z','')
+            timestamp = timestamp.replace('T',' ').replace('Z','')
             timestamp = datetime.datetime.strptime(timestamp,TIMESTAMP_FORMAT)
             entry = {VIDEO_ID:fetched_id,TITLE:result[SNIPPET][TITLE],
             DESCRIPTION:result[SNIPPET][DESCRIPTION],
