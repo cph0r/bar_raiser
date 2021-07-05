@@ -24,14 +24,14 @@ def dashboard(request):
     return render(request, BASE_PATH, {ENTRIES:entries})
 
 
-@api_view(['GET'])
+@api_view([GET])
 def view(request):
     entries = getattr(models,VIDEOS).objects.all().order_by('-'+DATE)
     serializer = videos_serializer(entries,many=True)
     return Response(serializer.data)
 
 
-@api_view(['GET'])
+@api_view([GET])
 def search(request,q):
     query_parameters = q.split()
     q1 = Q()
@@ -51,53 +51,66 @@ def search(request,q):
 
 
 def fill_db(sc):
-    api_url = YOUTUBE_BASE_API + API_KEY
-    PARAMS = {PART: PART_TYPE, QU: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
-              ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
-    r = requests.get(url=api_url, params=PARAMS)
-    data = r.json()
-    results = data[ITEMS]
-    existing_ids  = getattr(models,VIDEOS).objects.all().values_list(VIDEO_ID,flat=True)
+    api_keys = getattr(models,API_KEYS).objects.all().values_list(API_KEY,flat=True)
+    success= False
+    for api_key in api_keys:
+        if success == False:
+            try:
+                api_url = YOUTUBE_BASE_API + api_key
+                PARAMS = {PART: PART_TYPE, QU: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
+                        ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
+                r = requests.get(url=api_url, params=PARAMS)
+                data = r.json()
+                results = data[ITEMS]
+                existing_ids  = getattr(models,VIDEOS).objects.all().values_list(VIDEO_ID,flat=True)
 
-    bulk_create_list = []
-    for result in results:
-        fetched_id = result[ID]['videoId']
-        if fetched_id not in existing_ids:
-            timestamp = result[SNIPPET][PUBLISHED_AT]
-            timestamp = timestamp.replace('T',' ').replace('Z','')
-            timestamp = datetime.datetime.strptime(timestamp,TIMESTAMP_FORMAT)
-            entry = {VIDEO_ID:fetched_id,TITLE:result[SNIPPET][TITLE],
-            DESCRIPTION:result[SNIPPET][DESCRIPTION],
-            DATE:timestamp,PHOTO:result[SNIPPET][THUMBNAILS][DEFAULT][URL],
-            URL:YOUTUBE_BASE_URL+fetched_id}
-            new_video_instance = getattr(models,VIDEOS)(**entry)
-            bulk_create_list.append(new_video_instance)
-    
-    created_records = getattr(models,VIDEOS).objects.bulk_create(bulk_create_list)
-    print(created_records)
-    LAST_MODIFIED = datetime.datetime.now()
-    print('Last modified on :'+ str(LAST_MODIFIED))
-    s.enter(60, 1, fill_db, (sc,))
+                bulk_create_list = []
+                for result in results:
+                    fetched_id = result[ID]['videoId']
+                    if fetched_id not in existing_ids:
+                        timestamp = result[SNIPPET][PUBLISHED_AT]
+                        timestamp = timestamp.replace('T',' ').replace('Z','')
+                        timestamp = datetime.datetime.strptime(timestamp,TIMESTAMP_FORMAT)
+                        entry = {VIDEO_ID:fetched_id,TITLE:result[SNIPPET][TITLE],
+                        DESCRIPTION:result[SNIPPET][DESCRIPTION],
+                        DATE:timestamp,PHOTO:result[SNIPPET][THUMBNAILS][DEFAULT][URL],
+                        URL:YOUTUBE_BASE_URL+fetched_id}
+                        new_video_instance = getattr(models,VIDEOS)(**entry)
+                        bulk_create_list.append(new_video_instance)
+                
+                created_records = getattr(models,VIDEOS).objects.bulk_create(bulk_create_list)
+                print(created_records)
+                LAST_MODIFIED = datetime.datetime.now()
+                print(LAST_MODIFIED_ON + str(LAST_MODIFIED))
+                s.enter(60, 1, fill_db, (sc,))
+                success = True
+            except Exception as ex:
+                print(ex)
+                print(LIMIT_EXHAUSTED + api_key)
+                success = False
+        else:
+            print(FETCHED_RESULT)
+            break
 
 
 def add(request):
-    if request.method == 'POST':
+    if request.method == POST:
         try:
             name = request.POST.get(NAME)
             key = request.POST.get('api_key')
             if name == '' or name == None or key == '' or key == None:
-                messages.error(request,'Blank name or key')
-                return redirect('video_app:dashboard')
+                messages.error(request,BLANK_MESSAGE)
+                return redirect(DASHBOARD)
             else:
-                record = getattr(models,'api_keys').objects.get(**{NAME+IEXACT:name,'api_key'+IEXACT:key})
-                messages.error(request,'Duplicate name or key')
-                return redirect('video_app:dashboard')
+                record = getattr(models,API_KEYS).objects.get(**{NAME+IEXACT:name,'api_key'+IEXACT:key})
+                messages.error(request,DUPLICATE)
+                return redirect(DASHBOARD)
         except Exception as ex:
             print(ex)
-            record,created = getattr(models,'api_keys').objects.update_or_create(**{NAME:name,'api_key':key})
+            record,created = getattr(models,API_KEYS).objects.update_or_create(**{NAME:name,'api_key':key})
             print(record,created)
-            messages.success(request,'Added Successfully')    
-            return redirect('video_app:dashboard')
+            messages.success(request,SUCCESS)    
+            return redirect(DASHBOARD)
     else:
-        entries = getattr(models,'api_keys').objects.all()
+        entries = getattr(models,API_KEYS).objects.all()
         return render(request,MODAL_PATH,{ENTRIES:entries})

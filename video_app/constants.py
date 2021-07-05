@@ -34,3 +34,18 @@ ENTRIES= 'entries'
 ICONTAINS = '__icontains'
 IEXACT = '__iexact'
 NAME = 'name'
+POST = 'POST'
+GET  = 'GET'
+BLANK = ''
+API_KEYS = 'api_keys'
+
+# MESSAGES
+SUCCESS = 'Added Successfully'
+BLANK_MESSAGE = 'Blank name or key'
+DUPLICATE = 'Duplicate name or key'
+FETCHED_RESULT = "Fetched Result !!"
+LIMIT_EXHAUSTED = 'Exhausted Limit for api Key: '
+LAST_MODIFIED_ON ='Last modified on :'
+
+# VIEWS
+DASHBOARD = 'video_app:dashboard'
