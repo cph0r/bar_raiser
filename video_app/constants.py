@@ -1,5 +1,6 @@
 
 BASE_PATH = 'video_app/base.html'
+MODAL_PATH = 'video_app/modal/modal.html'
 TITLE = 'title'
 DESCRIPTION = 'description'
 DATE = 'date'
@@ -31,3 +32,5 @@ LAST_MODIFIED = ''
 TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 ENTRIES= 'entries'
 ICONTAINS = '__icontains'
+IEXACT = '__iexact'
+NAME = 'name'

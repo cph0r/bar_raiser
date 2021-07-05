@@ -13,6 +13,7 @@ class videos(models.Model):
 
 
 class api_keys(models.Model):
+    name = models.CharField(max_length=100,null=True)
     api_key = models.CharField(max_length=300,null=True)
 
     def __str__(self):

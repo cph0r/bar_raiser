@@ -1,0 +1,52 @@
+<div id="crud_modal" class="modal" style="display:block"> 
+  <span onclick="hide_modal()" class="close" title="Close Modal">×</span>
+  <div class="modal-content" style="width:max-content">
+    <div class="container">
+    <form id='create_form' method='POST' action='add/'>
+        {%csrf_token %}
+
+        <div style="display:flex;flex-direction:column">
+        <label>Enter Name
+        <input name='name' type="text" required/></label>
+
+        <label>Enter Key
+        <input name='api_key' type="text" required/></label>
+        
+        <label style='text-align:left'><strong>Existing Keys</strong></label>
+        <div style="display:block">
+        {%for entry in entries%}
+        <input type='text' disabled value="{{entry.name}}"/><input class='keys' type='password' disabled value="{{entry.api_key}}"/>
+        {%endfor %}
+        </div>
+        <button type='button' onclick='show_keys()'>show Keys</button>
+        </div>
+
+        <div class="clearfix">
+        <button type="button" onclick="hide_modal()" class="cancelbtn">Cancel</button>
+        <button type="submit" class="deletebtn">Add</button>
+        </div>
+        <form>
+    </div>
+  </div>
+</div>
+
+<script>
+var modal = document.getElementById('crud_modal')
+function hide_modal(){
+    modal.style.display='none'; }
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+function show_keys(){
+  let type = $('.keys').attr('type')
+  if (type == 'password'){
+$('.keys').attr('type','text')
+  }
+  else{
+$('.keys').attr('type','password')
+  }
+
+}
+</script>

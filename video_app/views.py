@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import HttpResponse
 import requests
 # from grequest
@@ -12,6 +12,7 @@ import datetime
 from .constants import *
 import sched, time
 from django.db.models import Q
+from django.contrib import messages
 
 from video_app import serializers
 s = sched.scheduler(time.time, time.sleep)
@@ -77,3 +78,26 @@ def fill_db(sc):
     LAST_MODIFIED = datetime.datetime.now()
     print('Last modified on :'+ str(LAST_MODIFIED))
     s.enter(60, 1, fill_db, (sc,))
+
+
+def add(request):
+    if request.method == 'POST':
+        try:
+            name = request.POST.get(NAME)
+            key = request.POST.get('api_key')
+            if name == '' or name == None or key == '' or key == None:
+                messages.error(request,'Blank name or key')
+                return redirect('video_app:dashboard')
+            else:
+                record = getattr(models,'api_keys').objects.get(**{NAME+IEXACT:name,'api_key'+IEXACT:key})
+                messages.error(request,'Duplicate name or key')
+                return redirect('video_app:dashboard')
+        except Exception as ex:
+            print(ex)
+            record,created = getattr(models,'api_keys').objects.update_or_create(**{NAME:name,'api_key':key})
+            print(record,created)
+            messages.success(request,'Added Successfully')    
+            return redirect('video_app:dashboard')
+    else:
+        entries = getattr(models,'api_keys').objects.all()
+        return render(request,MODAL_PATH,{ENTRIES:entries})
