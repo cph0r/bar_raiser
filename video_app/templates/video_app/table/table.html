@@ -1,0 +1,23 @@
+<table id="table_id" class="display">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th style="text-align:center">Description</th>
+            <th style="text-align:center">Publishing Date</th>
+            <th style="text-align:center">Thumbnail</th>
+            <th style="text-align:center">URL</th>
+        </tr> 
+    </thead>
+    <tbody>
+    {% for entry in entries %}
+        <tr>
+            <td>{{ entry.title }}</td>
+            <td style="text-align:center" >{{ entry.description }}</td>
+            <td style="text-align:center" >{{ entry.date }}</td>
+            <td style="text-align:center" >{{ entry.photo }}</td>
+            <td style="text-align:center" >{{ entry.url }}</td>
+            
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
