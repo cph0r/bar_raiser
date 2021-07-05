@@ -8,6 +8,12 @@ class videos(models.Model):
     photo = models.CharField(max_length=100,null=True)
     url = models.CharField(max_length=500,null=True)
 
+    def __str__(self):
+        return self.title
+
 
 class api_keys(models.Model):
     api_key = models.CharField(max_length=300,null=True)
+
+    def __str__(self):
+        return self.api_key

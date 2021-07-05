@@ -2,24 +2,56 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import requests
 # from grequest
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import videos_serializer
 
 from . import models
 from requests.api import get
 import datetime
 from .constants import *
 import sched, time
+from django.db.models import Q
+
+from video_app import serializers
 s = sched.scheduler(time.time, time.sleep)
 
-def index(request):
+def dashboard(request):
     entries = getattr(models,VIDEOS).objects.all().order_by('-'+DATE)
     # s.enter(60, 1, fill_db, (s,))
     # s.run()
     return render(request, BASE_PATH, {ENTRIES:entries})
 
 
+@api_view(['GET'])
+def view(request):
+    entries = getattr(models,VIDEOS).objects.all().order_by('-'+DATE)
+    serializer = videos_serializer(entries,many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def search(request,q):
+    query_parameters = q.split()
+    q1 = Q()
+    q2 = Q()
+    q3 = Q()
+    q4 = Q()
+
+    for entry in query_parameters:
+        q1 &= Q(**{TITLE+ICONTAINS:entry})
+        q2 &= Q(**{DESCRIPTION+ICONTAINS:entry})
+        q3 |= Q(**{TITLE+ICONTAINS:entry})
+        q4 |= Q(**{DESCRIPTION+ICONTAINS:entry})
+    final_query = q1 | q2 | q3 | q4
+    entries = getattr(models,VIDEOS).objects.filter(final_query).order_by('-'+DATE)
+    serializer = videos_serializer(entries,many=True)
+    return Response(serializer.data)
+
+
 def fill_db(sc):
     api_url = YOUTUBE_BASE_API + API_KEY
-    PARAMS = {PART: PART_TYPE, Q: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
+    PARAMS = {PART: PART_TYPE, QU: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
               ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
     r = requests.get(url=api_url, params=PARAMS)
     data = r.json()
@@ -43,5 +75,5 @@ def fill_db(sc):
     created_records = getattr(models,VIDEOS).objects.bulk_create(bulk_create_list)
     print(created_records)
     LAST_MODIFIED = datetime.datetime.now()
-    print('last modified on :'+ str(LAST_MODIFIED))
+    print('Last modified on :'+ str(LAST_MODIFIED))
     s.enter(60, 1, fill_db, (sc,))
