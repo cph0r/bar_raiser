@@ -5,44 +5,44 @@ import requests
 import json
 
 from requests import models
-
-BASE_PATH = 'video_app/base.html'
-
+from requests.api import get
+import datetime
+from .constants import *
+import sched, time
+s = sched.scheduler(time.time, time.sleep)
 
 def index(request):
-    api_key = 'AIzaSyBXXzS77zT4P-5U15_uhAD_9nT6vQCL8QM'
-    published_after = '2020-01-01T18:42:16Z'
-    URL = "https://youtube.googleapis.com/youtube/v3/search?key=" + api_key
-    PARAMS = {'part': 'snippet', 'q': 'cricket', 'maxResults': '5',
-              'order': 'date', 'type': 'video', 'publishedAfter': published_after}
-    r = requests.get(url=URL, params=PARAMS)
-    # data = json.loads(r.text)
-    data = r.json()
-    results = data['items']
-    # print(results)
-    for result in results:
-        print(result['id']['videoId'])
-        print(result['snippet']['title'])
-        print(result['snippet']['description'])
-        print(result['snippet']['publishedAt'])
-        print(result['snippet']['thumbnails']['default']['url'])
-    return render(request, BASE_PATH, {})
+    entries = getattr(models,VIDEOS).objects.all().order('-'+DATE)
+    s.enter(60, 1, fill_db, (s,))
+    s.run()
+    return render(request, BASE_PATH, {ENTRIES:entries})
 
 
-def fill_db():
-    api_key = 'AIzaSyBXXzS77zT4P-5U15_uhAD_9nT6vQCL8QM'
-    published_after = '2020-01-01T18:42:16Z'
-    URL = "https://youtube.googleapis.com/youtube/v3/search?key=" + api_key
-    PARAMS = {'part': 'snippet', 'q': 'cricket', 'maxResults': '5',
-              'order': 'date', 'type': 'video', 'publishedAfter': published_after}
+def fill_db(sc):
+    URL = YOUTUBE_BASE_API + API_KEY
+    PARAMS = {PART: PART_TYPE, Q: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
+              ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
     r = requests.get(url=URL, params=PARAMS)
     data = r.json()
-    results = data['items']
-    videos = getattr(models,'videos').objects.all()
-    for result in results:
-        print(result['id']['videoId'])
-        print(result['snippet']['title'])
-        print(result['snippet']['description'])
-        print(result['snippet']['publishedAt'])
-        print(result['snippet']['thumbnails']['default']['url'])
+    results = data[ITEMS]
+    existing_ids  = getattr(models,VIDEOS).objects.all().values_list(VIDEO_ID,flat=True)
 
+    bulk_create_list = []
+    for result in results:
+        fetched_id = result[ID][VIDEO_ID]
+        if fetched_id not in existing_ids:
+            timestamp = result[SNIPPET][PUBLISHED_AT]
+            timestamp.replace('T',' ').replace('Z','')
+            timestamp = datetime.datetime.strptime(timestamp,TIMESTAMP_FORMAT)
+            entry = {VIDEO_ID:fetched_id,TITLE:result[SNIPPET][TITLE],
+            DESCRIPTION:result[SNIPPET][DESCRIPTION],
+            DATE:timestamp,PHOTO:result[SNIPPET][THUMBNAILS][DEFAULT][URL],
+            URL:YOUTUBE_BASE_URL+fetched_id}
+            new_video_instance = getattr(models,VIDEOS)(**entry)
+            bulk_create_list.append(new_video_instance)
+    
+    created_records = getattr(models,VIDEOS).objects.bulk_create(bulk_create_list)
+    print(created_records)
+    LAST_MODIFIED = datetime.datime.now()
+    print('last modified on :'+ LAST_MODIFIED)
+    s.enter(60, 1, fill_db, (sc,))
