@@ -5,7 +5,9 @@ I have created to dashboard for viewing of all the availale videos in local db a
 
 I hope the project was upto the expectations of the reviewer , Let me know if there is anything else that I can add..
 
-I did all the basic requirements along with bonus points 
+I did all the basic requirements along with bonus points, the deployed  app on heroku has the update disabled to save requests in quota.
+
+HEROKU LINK -> https://fampayapp.herokuapp.com/
 
 BASIC REQUIREMENTS - 
 1. Call youtube API every 10 sec with a hard coded query - [x]
