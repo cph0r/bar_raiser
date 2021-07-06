@@ -4,8 +4,7 @@ import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import videos_serializer
-# import grequests
-# import asyncio
+import os
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -17,6 +16,7 @@ import sched
 import time
 from django.db.models import Q
 from django.contrib import messages
+from django.utils.timezone import make_aware
 
 from video_app import serializers
 s = sched.scheduler(time.time, time.sleep)
@@ -106,8 +106,8 @@ def create_new_entries(results, existing_ids):
             timestamp = result[SNIPPET][PUBLISHED_AT]
             timestamp = timestamp.replace(
                             'T', ' ').replace('Z', '')
-            timestamp = datetime.datetime.strptime(
-                            timestamp, TIMESTAMP_FORMAT)
+            timestamp = make_aware(datetime.datetime.strptime(
+                            timestamp, TIMESTAMP_FORMAT))
             entry = {VIDEO_ID: fetched_id, TITLE: result[SNIPPET][TITLE],
                                  DESCRIPTION: result[SNIPPET][DESCRIPTION],
                                  DATE: timestamp, PHOTO: result[SNIPPET][THUMBNAILS][DEFAULT][URL],
@@ -157,4 +157,7 @@ def run_scheduler():
     scheduler.add_job(fill_db, 'interval', seconds=10)
     scheduler.start()
 
-run_scheduler()
+if os.environ.get('HEROKU') == None:
+    run_scheduler()
+else:
+    print('Inside heroku server, API call is restricted')

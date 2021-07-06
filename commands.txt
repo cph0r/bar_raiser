@@ -4,3 +4,7 @@ docker stop<id>
 docker rm 
 docker build --tag fampay-app .
 docker run publish 8000:8000 fampay-app
+
+sudo docker run -it fampay-app
+sudo docker push ph0rgasm/fampay-app
+sudo docker tag fampay-app ph0rgasm/fampay-app
