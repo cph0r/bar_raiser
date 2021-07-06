@@ -22,19 +22,21 @@ from video_app import serializers
 s = sched.scheduler(time.time, time.sleep)
 
 
+
+
 def dashboard(request):
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
-    scheduler = BackgroundScheduler()
-    scheduler.configure(timezone='utc')
-    scheduler.add_job(fill_db, 'interval', seconds=10)
-    scheduler.start()
     return render(request, BASE_PATH, {ENTRIES: entries})
 
 
 @api_view([GET])
-def view(request):
+def view(self,request):
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
     serializer = videos_serializer(entries, many=True)
+    page = self.paginate_queryset(entries)
+    if page is not None:
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
     return Response(serializer.data)
 
 
@@ -74,6 +76,7 @@ def fill_db():
         else:
             print(FETCHED_RESULT)
             break
+
 
 def save_results(results):
     existing_ids = getattr(models, VIDEOS).objects.all(
@@ -148,3 +151,10 @@ def add(request):
         entries = getattr(models, API_KEYS).objects.all()
         return render(request, MODAL_PATH, {ENTRIES: entries})
 
+def run_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.configure(timezone='utc')
+    scheduler.add_job(fill_db, 'interval', seconds=10)
+    scheduler.start()
+
+run_scheduler()

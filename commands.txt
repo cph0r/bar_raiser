@@ -1,0 +1,6 @@
+sudo docker build -t fampay-app -f Dockerfile .
+docker ps
+docker stop<id>
+docker rm 
+docker build --tag fampay-app .
+docker run publish 8000:8000 fampay-app

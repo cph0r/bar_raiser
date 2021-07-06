@@ -1,16 +1,10 @@
 FROM python:3
-
-ENV PYTHONBUFFERED 1
-
+ENV PYTHONUNBUFFERED=1
+# WORKDIR /code
+RUN mkdir /app
 WORKDIR /app
+ADD . /app/
 
-ADD . /app
-
-COPY ./requirements.txt /app/requirements.txt
-
+COPY requirements.txt /code/
 RUN pip install -r requirements.txt
-COPY . /app 
-
-RUN adduser -D dockuser
-RUN chown dockuser:dockuser -R /app/
-USER dockuser
+COPY . /app/
