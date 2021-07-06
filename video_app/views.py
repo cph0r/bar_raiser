@@ -1,8 +1,8 @@
 from django.shortcuts import redirect, render
-from django.http import HttpResponse
 import requests
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
+# from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from .serializers import videos_serializer
 import os
 import time
@@ -22,26 +22,26 @@ from video_app import serializers
 s = sched.scheduler(time.time, time.sleep)
 
 
-
-
 def dashboard(request):
+    """Dashboard View to display locally stored results in decreasing order of Published Date"""
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
     return render(request, BASE_PATH, {ENTRIES: entries})
 
 
 @api_view([GET])
-def view(self,request):
+def view(request):
+    """API for Viewing"""
+    paginator = PageNumberPagination()
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
-    serializer = videos_serializer(entries, many=True)
-    page = self.paginate_queryset(entries)
-    if page is not None:
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
-    return Response(serializer.data)
+    results = paginator.paginate_queryset(entries, request)
+    serializer = videos_serializer(results, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 
 @api_view([GET])
 def search(request, q):
+    """API for Searching"""
+    paginator = PageNumberPagination()
     query_parameters = q.split()
     q1 = Q()
     q2 = Q()
@@ -56,13 +56,20 @@ def search(request, q):
     final_query = q1 | q2 | q3 | q4
     entries = getattr(models, VIDEOS).objects.filter(
         final_query).order_by('-'+DATE)
-    serializer = videos_serializer(entries, many=True)
-    return Response(serializer.data)
+
+    results = paginator.paginate_queryset(entries, request)
+    serializer = videos_serializer(results, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
 
 def fill_db():
+    """Create Video entries in db"""
+    # fetch all api keys
     api_keys = getattr(models, API_KEYS).objects.all(
     ).values_list(API_KEY, flat=True)
     success = False
+
+    # iterate over API keys till successfull api call
     for api_key in api_keys:
         if success == False:
             try:
@@ -79,24 +86,29 @@ def fill_db():
 
 
 def save_results(results):
+    """Save Results in the local DB"""
     existing_ids = getattr(models, VIDEOS).objects.all(
-                ).values_list(VIDEO_ID, flat=True)
+    ).values_list(VIDEO_ID, flat=True)
     fetched_ids = create_new_entries(results, existing_ids)
     delete_entries(existing_ids, fetched_ids)
-    
     LAST_MODIFIED = datetime.datetime.now()
     print(LAST_MODIFIED_ON + str(LAST_MODIFIED))
 
+
 def delete_entries(existing_ids, fetched_ids):
+    """Delete Videos that are no longer present in search Result"""
     to_delete_ids = []
     for entry in existing_ids:
         if entry not in fetched_ids:
             to_delete_ids.append(entry)
-    
+
     if len(to_delete_ids) != 0:
-        getattr(models, VIDEOS).objects.filter(**{VIDEO_ID+'__in':to_delete_ids}).delete()
+        getattr(models, VIDEOS).objects.filter(
+            **{VIDEO_ID+'__in': to_delete_ids}).delete()
+
 
 def create_new_entries(results, existing_ids):
+    """Create New Videos Entries"""
     fetched_ids = []
     bulk_create_list = []
     for result in results:
@@ -105,23 +117,25 @@ def create_new_entries(results, existing_ids):
         if fetched_id not in existing_ids:
             timestamp = result[SNIPPET][PUBLISHED_AT]
             timestamp = timestamp.replace(
-                            'T', ' ').replace('Z', '')
+                'T', ' ').replace('Z', '')
             timestamp = make_aware(datetime.datetime.strptime(
-                            timestamp, TIMESTAMP_FORMAT))
+                timestamp, TIMESTAMP_FORMAT))
             entry = {VIDEO_ID: fetched_id, TITLE: result[SNIPPET][TITLE],
-                                 DESCRIPTION: result[SNIPPET][DESCRIPTION],
-                                 DATE: timestamp, PHOTO: result[SNIPPET][THUMBNAILS][DEFAULT][URL],
-                                 URL: YOUTUBE_BASE_URL+fetched_id}
+                     DESCRIPTION: result[SNIPPET][DESCRIPTION],
+                     DATE: timestamp, PHOTO: result[SNIPPET][THUMBNAILS][DEFAULT][URL],
+                     URL: YOUTUBE_BASE_URL+fetched_id}
             new_video_instance = getattr(models, VIDEOS)(**entry)
             bulk_create_list.append(new_video_instance)
 
     getattr(models, VIDEOS).objects.bulk_create(bulk_create_list)
     return fetched_ids
 
+
 def fetch_results(api_key):
+    """Fetch results from youtube api"""
     api_url = YOUTUBE_BASE_API + api_key
     PARAMS = {PART: PART_TYPE, QU: QUERY, MAX_RESULTS: PAGE_THRESHOLD,
-                          ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
+              ORDER: DATE, TYPE: VIDEO, PUBLISHED_AFTER: THRESHOLD_DATE}
     r = requests.get(url=api_url, params=PARAMS)
     data = r.json()
     results = data[ITEMS]
@@ -130,34 +144,46 @@ def fetch_results(api_key):
 
 def add(request):
     if request.method == POST:
+        # Save Api Keys with unique names
         try:
             name = request.POST.get(NAME)
             key = request.POST.get(API_KEY)
+
             if name == BLANK or name == None or key == BLANK or key == None:
+                # Handle Blank or null names and keys
                 messages.error(request, BLANK_MESSAGE)
                 return redirect(DASHBOARD)
             else:
-                record = getattr(models, API_KEYS).objects.get(
+                # Handle Duplicity of name and key
+                getattr(models, API_KEYS).objects.get(
                     **{NAME+IEXACT: name, API_KEY+IEXACT: key})
                 messages.error(request, DUPLICATE)
                 return redirect(DASHBOARD)
+                
         except Exception as ex:
             print(ex)
+            # Saving Api keys in db
             getattr(models, API_KEYS).objects.update_or_create(
                 **{NAME: name, API_KEY: key})
             messages.success(request, SUCCESS)
             return redirect(DASHBOARD)
     else:
+        # Render Modal in Front end
         entries = getattr(models, API_KEYS).objects.all()
         return render(request, MODAL_PATH, {ENTRIES: entries})
 
+
 def run_scheduler():
+    """Running fill Db function asynchronously"""
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone='utc')
     scheduler.add_job(fill_db, 'interval', seconds=10)
     scheduler.start()
 
+
 if os.environ.get('HEROKU') == None:
+    """Checking for env variable to check if sever is deployed in heroku"""
+    print('Not in heroku, Api call will work')
     run_scheduler()
 else:
-    print('Inside heroku server, API call is restricted')
+    print('Inside heroku server, API call are restricted to prevent quota Exhaustion')

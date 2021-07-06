@@ -1,6 +1,12 @@
 # fampay_video_app
 Youtube video App linked with youtube api, made for fampay interview first round.. please do not copy if you are giving interview for fampay and if you do please make sure at least change the readme file..
 
+I have created to dashboard for viewing of all the availale videos in local db also I have added the functionality to add new api keys from the dashboard.
+
+I hope the project was upto the expectations of the reviewer , Let me know if there is anything else that I can add..
+
+I did all the basic requirements along with bonus points 
+
 BASIC REQUIREMENTS - 
 1. Call youtube API every 10 sec with a hard coded query - [x]
 
@@ -10,7 +16,7 @@ BASIC REQUIREMENTS -
     -> 'https://fampayapp.herokuapp.com/search/<INSERT QUERY HERE>/'
 
 4. Dockerise the application - [x]
-    -> 'https://docker_url.com/
+    -> 'docker pull ph0rgasm/fampay-app:latest'
 
 5. Make the project Scalable and optimised - [x]
     -> search queries are optimised to do the searching in a single request.
@@ -24,7 +30,8 @@ BONUS POINTS -
 ASSUMPTIONS - 
 1. Query parameter was assumed  to be -> 'cricket'
 2. Threshold date was hardcoded as query parameter to be  -> '2020-01-01T18:42:16Z'
-3. total results were restricted to 1000
+3. total results were restricted to 100 to prevent quota exhaustion
 
 ISSUES - 
 1. Server Side rendering was not done dashboard, due to which it will take a lot of time to render if max_results exceeds 10,000
+2. Null checks and string format checks are not performed for api Keys creation from the frontend
