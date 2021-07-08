@@ -33,14 +33,17 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'video_app.apps.VideoAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-     'rest_framework',
+    'rest_framework',
     'django.contrib.staticfiles',
+    'video_app.apps.VideoAppConfig',
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf'
+
 ]
 
 MIDDLEWARE = [
@@ -135,5 +138,24 @@ django_heroku.settings(locals())
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5
+    'PAGE_SIZE': 5,
 }
+
+
+# OPTIMISATIONS 
+# CACHE SETTINGS
+CACHE_TTL = 60 * 1500
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "example"
+    }
+}
+
+# ELASTIC SEARCH
+ELASTICSEARCH_DSL = {'default':{'hosts': os.environ.get('elastic_search_url','localhost:9200')}}
