@@ -1,7 +1,9 @@
+from configurations.settings import CACHE_TTL
+from rest_framework import decorators
+from video_app.documents import video_document
 from django.shortcuts import redirect, render
 import requests
 from rest_framework.decorators import api_view
-# from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from .serializers import videos_serializer
 import os
@@ -9,7 +11,6 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from . import models
-from requests.api import get
 import datetime
 from .constants import *
 import sched
@@ -17,11 +18,16 @@ import time
 from django.db.models import Q
 from django.contrib import messages
 from django.utils.timezone import make_aware
-
-from video_app import serializers
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from django_elasticsearch_dsl_drf.filter_backends import FilteringFilterBackend, CompoundSearchFilterBackend,OrderingFilterBackend
+from .documents import *
+from django.core.cache import cache
+from django.conf  import settings
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.views.decorators.cache import cache_page
 s = sched.scheduler(time.time, time.sleep)
 
-
+CACHE_TTL = getattr(settings,'CACHE_TTL',DEFAULT_TIMEOUT)
 def dashboard(request):
     """Dashboard View to display locally stored results in decreasing order of Published Date"""
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
@@ -31,18 +37,34 @@ def dashboard(request):
 @api_view([GET])
 def view(request):
     """API for Viewing"""
-    paginator = PageNumberPagination()
+    # Applied redis caching for optimization
+    # if cache.get(VIDEOS):
+    #     entries = cache.get(VIDEOS)
+    # else:
     entries = getattr(models, VIDEOS).objects.all().order_by('-'+DATE)
+    # cache.set(VIDEOS,entries)
+    paginator = PageNumberPagination()
     results = paginator.paginate_queryset(entries, request)
     serializer = videos_serializer(results, many=True)
     return paginator.get_paginated_response(serializer.data)
 
+# OPTIMISED SEARCH WITH ELASTIC SEARCH AND SHARDING, UNCOMMENT FOR USE WITH ELASTIC SEARCH
+# class search(DocumentViewSet):
+#     document = video_document
+#     serializer_class = videos_serializer 
+#     filter_backends = [FilteringFilterBackend,CompoundSearchFilterBackend,OrderingFilterBackend]
+#     search_fields = (TITLE,DESCRIPTION)
+#     multi_search_fields = [TITLE,DESCRIPTION]
+#     filter_fields = {TITLE:TITLE,DESCRIPTION:DESCRIPTION}
+#     ordering_fields = {}
+#     ordering = ('-date')
 
+# NORMAL SEARCH TO BE USED IN CASE ELASTIC SEARCH IS NOT RUNNING ON SERVER 
 @api_view([GET])
-def search(request, q):
+def search(request):
     """API for Searching"""
     paginator = PageNumberPagination()
-    query_parameters = q.split()
+    query_parameters = request.GET.get('search').split()
     q1 = Q()
     q2 = Q()
     q3 = Q()
@@ -54,9 +76,10 @@ def search(request, q):
         q3 |= Q(**{TITLE+ICONTAINS: entry})
         q4 |= Q(**{DESCRIPTION+ICONTAINS: entry})
     final_query = q1 | q2 | q3 | q4
+
     entries = getattr(models, VIDEOS).objects.filter(
         final_query).order_by('-'+DATE)
-
+    # entries = video_document.search().filter('match',title=request.GET.get('search'),description=request.GET.get('search'))
     results = paginator.paginate_queryset(entries, request)
     serializer = videos_serializer(results, many=True)
     return paginator.get_paginated_response(serializer.data)

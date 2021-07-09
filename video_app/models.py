@@ -1,6 +1,8 @@
 from django.db import models
+# from .search import video_index
 
 class videos(models.Model):
+    id = models.AutoField(primary_key=True)
     video_id = models.CharField(max_length=200,null=True,unique=True)
     title = models.CharField(max_length=500,null=True)
     description = models.CharField(max_length=2000,null=True)
@@ -8,6 +10,8 @@ class videos(models.Model):
     photo = models.CharField(max_length=100,null=True)
     url = models.CharField(max_length=500,null=True)
 
+    class Meta(object):
+        ordering = ["-date"]
     def __str__(self):
         return self.title
 

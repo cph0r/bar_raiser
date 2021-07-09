@@ -15,7 +15,7 @@ BASIC REQUIREMENTS -
 2. Create a API to return a paginated response of all stored videos - [x]
     -> 'https://fampayapp.herokuapp.com/view'
 3. Create a API able to search the videos in local db based on title and description - [x]
-    -> 'https://fampayapp.herokuapp.com/search/<INSERT QUERY HERE>/'
+    -> 'https://fampayapp.herokuapp.com/search?search=INSERT SEARCH QUERY HERE'
 
 4. Dockerise the application - [x]
     -> 'docker pull ph0rgasm/fampay-app:latest'
@@ -23,6 +23,8 @@ BASIC REQUIREMENTS -
 5. Make the project Scalable and optimised - [x]
     -> search queries are optimised to do the searching in a single request.
     -> easy to scale the application by increasing the constant for resultThreshold in the code.
+    -> Elastic search was used to optimise the projects search api using sharding.
+    -> Redis was used to do caching in view api.
 
 BONUS POINTS -
 1. Added support for adding multiple api keys in dashboard - [x]
@@ -37,5 +39,4 @@ ASSUMPTIONS -
 ISSUES - 
 1. Server Side rendering was not done dashboard, due to which it will take a lot of time to render if max_results exceeds 10,000
 2. Null checks and string format checks are not performed for api Keys creation from the frontend
-
-**A second branch optimised with redis and elastic search is also present for reference which I was unable to deploy in heroku due to payment issues,so it was not merged in main branch
+3. Redis Caching was used so consistency was compromised for availability

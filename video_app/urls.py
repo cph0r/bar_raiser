@@ -1,3 +1,4 @@
+from video_app.constants import GET
 from django.urls import path
 
 from . import views
@@ -9,5 +10,8 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('add/',views.add,name='add'),
     path('view',views.view,name='view'),
-    path('search/<str:q>',views.search,name='search')
-]
+    # elasticsearch with sharding for optimization
+    # path('search/',views.search.as_view({'get':'list'}),name='search')]
+    #normal search 
+    path(r'search/',views.search ,name='search')]
+    
