@@ -37,3 +37,5 @@ ASSUMPTIONS -
 ISSUES - 
 1. Server Side rendering was not done dashboard, due to which it will take a lot of time to render if max_results exceeds 10,000
 2. Null checks and string format checks are not performed for api Keys creation from the frontend
+
+**A second branch optimised with redis and elastic search is also present for reference which I was unable to deploy in heroku due to payment issues,so it was not merged in main branch
