@@ -1,0 +1,27 @@
+<!DOCTYPE>
+    <html>
+    <head>
+ {% include "app/imports/js.html" %}
+{% include "app/imports/css.html" %}
+    <title>
+        New App
+    </title>    
+    <head>
+{%  include 'app/imports/style.html' %}
+    <body>
+    <button type='button' onclick="crud()"  style=" width:auto;padding:10px;margin-left:100px;margin-top:10px"><i class="fa fa-plus-circle"></i>ADD API KEY</button>
+    <div id='modal_div'></div>
+    <div style="padding:100px">
+    
+<div>
+
+{% include "app/table/script.html" %}
+{% if messages %}
+<script>
+{% for message in messages %}
+    alert('{{message}}')
+{% endfor%}
+</script>
+{% endif %}
+</body>
+</html>

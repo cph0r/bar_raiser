@@ -40,10 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'rest_framework',
     'django.contrib.staticfiles',
-    'video_app.apps.VideoAppConfig',
-    'django_elasticsearch_dsl',
-    'django_elasticsearch_dsl_drf'
-
+    'app.apps.VideoAppConfig',
 ]
 
 MIDDLEWARE = [
@@ -134,28 +131,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Activate Django-Heroku.
-django_heroku.settings(locals())
+# django_heroku.settings(locals())
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5,
 }
-
-
-# OPTIMISATIONS 
-# CACHE SETTINGS
-CACHE_TTL = 60 * 1500
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
-        },
-        "KEY_PREFIX": "example"
-    }
-}
-
-# ELASTIC SEARCH
-ELASTICSEARCH_DSL = {'default':{'hosts': os.environ.get('elastic_search_url','localhost:9200')}}

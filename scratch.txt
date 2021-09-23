@@ -1,0 +1,11 @@
+
+if os.environ.get('HEROKU') == None:
+    """Checking for env variable to check if sever is deployed in heroku"""
+    print('Not in heroku, Api call will work')
+    run_scheduler()
+else:
+    print('Inside heroku server, API call are restricted to prevent quota Exhaustion')
+
+,
+    path(r'search/',views.search ,name='search')
+    
