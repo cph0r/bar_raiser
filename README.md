@@ -1,5 +1,16 @@
 The following assignment was created for barraiser interview, Please do not copy paste and if you do please make sure to change the readme file.
 
+
+How to run:
+1. clone project
+2. cd to project directory
+3. create and activate virtual environment
+4. run 'pip install -r requirements.txt'
+5. run 'python3 manage.py makemigrations'
+6. run 'python3 manage.py migrate'
+7. create sample users and products for testing
+8. run 'python3 managy.py runserver'
+
 Assumptions:
 1. one deal only has one product
 2. date format = yyyy-mm-dd
