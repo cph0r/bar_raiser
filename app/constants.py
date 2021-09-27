@@ -45,7 +45,22 @@ GET  = 'GET'
 BLANK = ''
 
 # MESSAGES
-
-
+ERROR= 'Error'
+SUCCESS = 'Success'
+INCOMPLETE_DATA = 'Incomplete Data'
+DATE_ERROR = 'Start date greater than end date'
+FORMAT_ERROR = 'Incorrect Data'
+DEAL_DOESNT_EXIST = 'Deal Doesnt Exist'
+DEAL_ALREADY_EXIST = 'Deal Already  Exist for given Product'
+DELETED = 'Deal deleted'
+UPDATED = 'Deal Updated'
+CREATED = 'Deal Created'
+DEAL_CLAIMED =  'Deal Claimed'
+LIMIT_EXCEDED = 'Deal Limit Exceded'
+TIME_EXCEDED = 'Deal Time Exceded'
 # VIEWS
 DASHBOARD = 'app:dashboard'
+UTF_8 = 'utf-8'
+
+# DATE FORMAT
+YMD_HMS = "%Y-%m-%d %H:%M:%S"

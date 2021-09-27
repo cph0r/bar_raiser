@@ -20,6 +20,7 @@ from django.utils.timezone import make_aware
 
 s = sched.scheduler(time.time, time.sleep)
 
+
 def dashboard(request):
     """Dashboard View"""
     return render(request, BASE_PATH, {})
@@ -27,78 +28,127 @@ def dashboard(request):
 
 @api_view([POST])
 def create(request):
-    start = request.POST.get(START)
-    end = request.POST.get(END)
-    procuct_id = request.POST.get(PRODUCT_ID)
-    max_deals = request.POST.get(MAX)
+    body = render_body(request)
+    start = body.get(START)
+    end = body.get(END)
+    product_id = body.get(PRODUCT_ID)
+    max_deals = body.get(MAX)
+    if start and end and product_id and max_deals:
+        try:
+            convert_dates(start, end)
+            if start > end:
+                return JsonResponse({ERROR: DATE_ERROR})
+            else:
+                entry_map = {
+                    START: start,
+                    END: end,
+                    PRODUCT_ID: int(product_id),
+                    MAX_DEALS: int(max_deals),
+                    CURRENT_DEALS: 0
+                }
+                if already_exist(product_id):
+                    return JsonResponse({ERROR: DEAL_ALREADY_EXIST})
+                else:
+                    getattr(models, DEALS).objects.update_or_create(
+                        **entry_map)
+                    return JsonResponse({CREATED: ''})
+        except:
+            return JsonResponse({ERROR: FORMAT_ERROR})
 
-    if start and end and procuct_id and max_deals:
-        start = datetime.datetime.strptime(start, '%YYYY-%m-%d')
-        end = datetime.datetime.strptime(end, '%YYYY-%m-%d')
-        entry_map = {
-            START :start,
-            END:end,
-            PRODUCT_ID:int(procuct_id),
-            MAX_DEALS :int(max_deals),
-            CURRENT_DEALS :0
-        }
-        getattr(models,STATUS).objects.update_or_create(**entry_map)
-        return JsonResponse({'Deal Created':''})
     else:
-        return JsonResponse({'error':'incomplete data'})
+        return JsonResponse({ERROR: INCOMPLETE_DATA})
+
 
 
 @api_view([POST])
 def update(request):
-    deal_id = request.POST.get(DEAL_ID) 
-    start = request.POST.get(START)
-    end = request.POST.get(END)
-    procuct_id = request.POST.get(END)
-    max_deals = request.POST.get(MAX)
-
-    if deal_id and start and end and procuct_id and max_deals:
-        entry_map = {
-            START :start,
-            END:end,
-            PRODUCT_ID:int(procuct_id),
-            MAX_DEALS :int(max_deals),
-            CURRENT_DEALS :0
-        }
-        getattr(models,STATUS).objects.update_or_create(deal_id=int(deal_id),defaults=entry_map)
-        return JsonResponse({'Deal Updated':deal_id})
+    body = render_body(request)
+    start = body.get(START)
+    end = body.get(END)
+    product_id = body.get(PRODUCT_ID)
+    max_deals = body.get(MAX)
+    deal_id = body.get(DEAL_ID)
+    
+    if deal_id and start and end and product_id and max_deals:
+        try:
+            convert_dates(start, end)
+            if start > end:
+                return JsonResponse({ERROR: DATE_ERROR})
+            else:
+                entry_map = {
+                    START: start,
+                    END: end,
+                    PRODUCT_ID: int(product_id),
+                    MAX_DEALS: int(max_deals),
+                    CURRENT_DEALS: 0
+                }
+                a = getattr(models, DEALS).objects.filter(deal_id=int(deal_id),status=1)
+                if len(a) == 0:
+                    return JsonResponse({ERROR: DEAL_DOESNT_EXIST})
+                else:
+                    getattr(models, STATUS).objects.update_or_create(
+                    deal_id=int(deal_id),status=1, defaults=entry_map)
+                    return JsonResponse({UPDATED: deal_id})
+        except:
+            return JsonResponse({ERROR: FORMAT_ERROR})
     else:
-        return JsonResponse({'error':'incomplete data'})
+        return JsonResponse({ERROR: INCOMPLETE_DATA})
+
 
 
 @api_view([POST])
 def delete(request):
-    deal_id =  request.POST.get(DEAL_ID)
+    body = render_body(request)
+    deal_id = body.get(DEAL_ID)
     if deal_id:
-        a,b = getattr(models,DEALS).objects.update_or_create(id=deal_id,default={STATUS_ID:2})
-        return JsonResponse({'Success':'deal deleted'})
+        try:
+            getattr(models, DEALS).objects.get(deal_id=int(deal_id),status=1)
+            getattr(models, DEALS).objects.update_or_create(id=deal_id, default={STATUS_ID: 2})
+            return JsonResponse({SUCCESS: DELETED})
+        except:
+            return JsonResponse({ERROR: DEAL_DOESNT_EXIST})
     else:
-        return JsonResponse({'error':'incomplete data'})
+        return JsonResponse({ERROR:INCOMPLETE_DATA})
 
 
 @api_view([GET])
 def claim(request):
     """API"""
-    user_id = request.POST.get(USER_ID)
+    body = render_body(request)
+    user_id = body.get(USER_ID)
     t = datetime.datetime.now()
-    deal_id =  request.POST.get(PRODUCT_ID)
+    deal_id = body.get(PRODUCT_ID)
     if user_id and t and deal_id:
         try:
-            entry = getattr(models,DEALS).objects.get(id=deal_id)
+            entry = getattr(models, DEALS).objects.get(id=deal_id)
             if entry.current_deals == entry.max_deals:
-                return JsonResponse({'error: ':'deal limit exceded'})
+                return JsonResponse({ERROR: LIMIT_EXCEDED})
             else:
                 if t <= entry.end and entry.status_id == 1:
-                    getattr(models,DEALS).objects.update_or_create(id=deal_id,default={CURRENT_DEALS:entry.current__deals+1})
-                    return JsonResponse({'success: ':'deal claimed'})
+                    getattr(models, DEALS).objects.update_or_create(
+                        id=deal_id, default={CURRENT_DEALS: entry.current__deals+1})
+                    return JsonResponse({SUCCESS: DEAL_CLAIMED})
                 else:
-                    return JsonResponse({'error: ':'deal time exceeded'})
-
+                    return JsonResponse({ERROR: TIME_EXCEDED})
         except Exception as ex:
-            return JsonResponse({'error: ':'deal doesnt exist'})
+            return JsonResponse({ERROR: DEAL_DOESNT_EXIST})
     else:
-        return JsonResponse({'error':'incomplete data'})
+        return JsonResponse({ERROR: INCOMPLETE_DATA})
+
+
+def render_body(request):
+    body_unicode = request.body.decode(UTF_8)
+    body = json.loads(body_unicode)
+    return body
+
+
+def convert_dates(start, end):
+    start = datetime.datetime.strptime(start, YMD_HMS)
+    end = datetime.datetime.strptime(end, YMD_HMS)
+
+def already_exist(product_id):
+    a = getattr(models, DEALS).objects.filter(product_id=int(product_id),status=1)
+    if len(a) > 0:
+        return True
+    else:
+        return False
