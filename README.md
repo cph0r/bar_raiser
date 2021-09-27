@@ -13,7 +13,7 @@ How to run:
 
 Assumptions:
 1. one deal only has one product
-2. date format = yyyy-mm-dd
+2. date format = yyyy-mm-dd hh:mm:ss
 
 Validations:
 1. complete data check
